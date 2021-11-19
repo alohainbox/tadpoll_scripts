@@ -5,7 +5,7 @@
 
     //get customer id
     var custParams = getParams(search_path + "youtube_demo.js");
-    console.log("id", custParams);
+    //console.log("id", custParams);
     
     //Add container elements to format video
     $("#tadpoll1234").append("<div class='playerPopup'><div class='playerwin' id='player'></div></div>");
@@ -54,69 +54,68 @@
     
   // The API calls this function when the player's state changes.
     var done = false;
-    var done_form = false;
     var done_pause = false;
     var timep = 0;
     var pause_source_func = false;
     var currentplay = 1;
     var playtime = eval("custParams.element_" + String(currentplay) + "_insert");
-    console.log("playtime", playtime);
+    //console.log("playtime", playtime);
     
     
     function onPlayerStateChange(event) {
         if (event.data == YT.PlayerState.PLAYING && !done) {
             timep = Math.round(player.getCurrentTime());
-            //console.log(playtime, timep, (playtime-timep)*1000);
+            //console.log(playtime, timep, (playtime-timep)*1000, done_pause);
             
-            if (timep >= playtime){ //&& !done_form){ 
+            if (timep >= playtime && !done_pause){ 
                 pauseVideo();
-                console.log("pause in playing"); 
+                //console.log("pause in playing"); 
             }
-            else {//if (!done_form) { 
-                console.log("set time out in playing to ", ((playtime-timep)*1000)/playbackrate)
+            else { 
+                //console.log("set time out in playing to ", ((playtime-timep)*1000)/playbackrate)
                 setTimeout(pauseVideo, ((playtime-timep)*1000)/playbackrate); 
             }
             done = true;
         }
         if (event.data == YT.PlayerState.PAUSED && done) {
             timep = Math.round(player.getCurrentTime());
-            console.log("paused & done", timep, playtime);
-            //if (!done_form){
+            console.log("paused & done", timep, playtime, pause_source_func);
                 if (timep < playtime && !pause_source_func) {
-                    console.log("set done to false")
+                    //console.log("set done to false")
                     done = false;
                 }
                 else if (timep < playtime && pause_source_func) {
                     pause_source_func = false;
-                    player.playVideo();
+                    playVideo();
                     done = false;
-                    console.log("pause source")
+                    //console.log("pause source")
                 }
                 else if (timep >= playtime && !done_pause) {
                     if (eval("custParams.element_" + String(currentplay) + "_type")=="form"){
                         openForm(currentplay);
-                        console.log("open form", currentplay, timep);
+                        //console.log("open form", currentplay, timep, pause_source_func);
                     }
                     else if (eval("custParams.element_" + String(currentplay) + "_type")=="iframe"){
                         openiframe(currentplay);
-                        console.log("open iframe", currentplay, timep);
+                        //console.log("open iframe", currentplay, timep, pause_source_func);
                     }
                     done_pause = true;
                     done = false;
                 }
-            //}
         }
     }
     function pauseVideo() {
         player.pauseVideo();
         pause_source_func = true;
     }
+    function playVideo() {
+        player.playVideo();
+    }
     function openForm(num) {
         document.getElementById("tadpoll_form" + String(num)).style.display = "block";
         document.getElementById("tadpoll_button" + String(num)).style.display = "block";
     }
     function openiframe(num) {
-        //document.getElementById("tadpoll_iframeform" + String(num)).src = src;
         document.getElementById("tadpoll_iframeform" + String(num)).style.display = "block";
         document.getElementById("tadpoll_iframebutton" + String(num)).style.display = "block";
     }
@@ -127,7 +126,6 @@
         document.getElementById("tadpoll_button"+String(id)).style.display = "none";
         data1 = document.getElementById("data1form" + String(id)).value;
         data2 = document.getElementById("data2form" + String(id)).value;
-        //console.log(datain);
         var data1_key = "data1form" + String(id);
         var data2_key = "data2form" + String(id);
         var data_obj = {};
@@ -147,10 +145,10 @@
             data_obj["fields"][data1_key] = data1;
             data_obj["fields"][data2_key] = data2;
             data_obj["fields"]["customer_id"]=custParams.id;
-            console.log(data_obj, data1_key, data2_key);
+            //console.log(data_obj, data1_key, data2_key);
             updateForm(data_obj);
         }
-        //done_form = true;
+        pauseVideo();
         pause_source_func = false;
         if (id < custParams.numElements) {
             //console.log("set done to false, done_form", currentplay)
@@ -159,19 +157,23 @@
             currentplay++;
             playtime = eval("custParams.element_" + String(currentplay) + "_insert");
         }
-        player.playVideo();
+        else {done = true;}
+        playVideo();
     }
     
     function closeiframe(id) {
         document.getElementById("tadpoll_iframeform" + String(id)).style.display = "none";
         document.getElementById("tadpoll_iframebutton" + String(id)).style.display = "none";
+        pauseVideo();
         pause_source_func = false;
         if (id < custParams.numElements) {
             done=false; 
             currentplay++;
             playtime = eval("custParams.element_" + String(currentplay) + "_insert");
         }
-        player.playVideo();
+        else {done = true;}
+        //console.log("iframeclose", id, currentplay, done);
+        playVideo();
     }
     
     function saveForm(data_obj) {
@@ -183,7 +185,7 @@
             redirect: "follow",
             body: JSON.stringify([data_obj])
         };
-        console.log(requestOptions);
+        //console.log(requestOptions);
         return fetch("https://v1.nocodeapi.com/davegtad/airtable/rQaerrGsnnHzwllE?tableName=Table 4&api_key=GJwptPIUjuDsMsOsz", requestOptions)
         .then(response => response.json())
         .then(result => result)

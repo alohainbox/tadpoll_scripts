@@ -100,16 +100,25 @@
                         "&element_" + String(r) + "_insert=" + eval("custParams.fields.element_" + String(r) + "_insert");
                     }
                     //console.log(video_path)
+                    var duplicate_css = false;
                     loadScript(video_path, "text/javascript")
                     .then(script => {
                         for (let i=1; i<=custParams.fields.numElements; i++){
-                            loadcss(eval("custParams.fields.element_" + String(i) + "_css"));
+                            duplicate_css = false;
+                            for (let u=i+1; u<=custParams.fields.numElements; u++){
+                                if (eval("custParams.fields.element_" + String(i) + "_css")==eval("custParams.fields.element_" + String(u) + "_css")){
+                                    duplicate_css = true;
+                                }
+                            }
+                            if (!duplicate_css) {
+                                loadcss(eval("custParams.fields.element_" + String(i) + "_css"));
+                            }
                             if (eval("custParams.fields.element_" + String(i) + "_type")=="form"){
                                 $("#tadpoll1234").append("<div class='loginPopup' id='tadpoll_login" + String(i) + "'></div>");
                                 $("#tadpoll_login" + String(i)).load(eval("custParams.fields.element_" + String(i) + "_html"), function(){
                                     $("#tadpoll_login" + String(i) + "> div").attr("id", "tadpoll_form" + String(i));
-                                    $("#tadpoll_form" + String(i) + "> button").attr("id", "tadpoll_button" + String(i));
-                                    $("#tadpoll_form" + String(i) + "> button").attr("onclick", "closeForm("+String(i)+")");
+                                    $("#tadpoll_login" + String(i) + "> button").attr("id", "tadpoll_button" + String(i));
+                                    $("#tadpoll_login" + String(i) + "> button").attr("onclick", "closeForm("+String(i)+")");
                                     $("#tadpoll_form" + String(i) + "> div > input").eq(0).attr("id", "data1form" + String(i));
                                     $("#tadpoll_form" + String(i) + "> div > input").eq(1).attr("id", "data2form" + String(i));
                                     $("#tadpoll_form" + String(i) + "> div > button").eq(0).attr("id", "tadpoll_submit" + String(i));
