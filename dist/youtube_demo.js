@@ -1,0 +1,228 @@
+    var release_version = "0.0.1";
+    var search_path_release = "np-ally/tadpoll_scripts@" + release_version + "/dist/";
+    if (window.location.protocol === "file:") {var search_path = '';}
+    else { search_path = search_path_release; }
+
+    //get customer id
+    var custParams = getParams(search_path + "youtube_demo.js");
+    console.log("id", custParams);
+    
+    //Add container elements to format video
+    $("#tadpoll1234").append("<div class='playerPopup'><div class='playerwin' id='player'></div></div>");
+    
+    
+ // This code loads the IFrame Player API code asynchronously.
+    var tag = document.createElement('script')
+    tag.src = "https://www.youtube.com/iframe_api";
+    var firstScriptTag = document.getElementsByTagName('script')[0]
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag)
+
+  // This function creates an <iframe> (and YouTube player)
+  // after the API code downloads.
+    var player;
+    function onYouTubeIframeAPIReady() {
+        player = new YT.Player('player', {
+        videoId: custParams.video,
+        playerVars: {
+            'playsinline' : 1, 
+            'controls' : 1,
+            'rel' : 0,
+            'modestbranding' : 1,
+            'disablekb' : 1,
+            'fs' : 0,
+            'autoplay' : 0
+         },
+        events: {
+            'onReady': onPlayerReady,
+            'onStateChange': onPlayerStateChange,
+            'onPlaybackRateChange': onPlayerRateChange
+        }
+        });
+    }
+
+  // The API will call this function when the video player is ready.
+    function onPlayerReady(event) {
+    event.target.playVideo();
+    }
+
+  //The API will call this function when the video player rate changes.
+    var playbackrate = 1;
+    function onPlayerRateChange(event) {
+        playbackrate = event.data;
+        //console.log("playbackrate", playbackrate)
+    }
+    
+  // The API calls this function when the player's state changes.
+    var done = false;
+    var done_form = false;
+    var done_pause = false;
+    var timep = 0;
+    var pause_source_func = false;
+    var currentplay = 1;
+    var playtime = eval("custParams.element_" + String(currentplay) + "_insert");
+    console.log("playtime", playtime);
+    
+    
+    function onPlayerStateChange(event) {
+        if (event.data == YT.PlayerState.PLAYING && !done) {
+            timep = Math.round(player.getCurrentTime());
+            //console.log(playtime, timep, (playtime-timep)*1000);
+            
+            if (timep >= playtime){ //&& !done_form){ 
+                pauseVideo();
+                console.log("pause in playing"); 
+            }
+            else {//if (!done_form) { 
+                console.log("set time out in playing to ", ((playtime-timep)*1000)/playbackrate)
+                setTimeout(pauseVideo, ((playtime-timep)*1000)/playbackrate); 
+            }
+            done = true;
+        }
+        if (event.data == YT.PlayerState.PAUSED && done) {
+            timep = Math.round(player.getCurrentTime());
+            console.log("paused & done", timep, playtime);
+            //if (!done_form){
+                if (timep < playtime && !pause_source_func) {
+                    console.log("set done to false")
+                    done = false;
+                }
+                else if (timep < playtime && pause_source_func) {
+                    pause_source_func = false;
+                    player.playVideo();
+                    done = false;
+                    console.log("pause source")
+                }
+                else if (timep >= playtime && !done_pause) {
+                    if (eval("custParams.element_" + String(currentplay) + "_type")=="form"){
+                        openForm(currentplay);
+                        console.log("open form", currentplay, timep);
+                    }
+                    else if (eval("custParams.element_" + String(currentplay) + "_type")=="iframe"){
+                        openiframe(currentplay);
+                        console.log("open iframe", currentplay, timep);
+                    }
+                    done_pause = true;
+                    done = false;
+                }
+            //}
+        }
+    }
+    function pauseVideo() {
+        player.pauseVideo();
+        pause_source_func = true;
+    }
+    function openForm(num) {
+        document.getElementById("tadpoll_form" + String(num)).style.display = "block";
+        document.getElementById("tadpoll_button" + String(num)).style.display = "block";
+    }
+    function openiframe(num) {
+        //document.getElementById("tadpoll_iframeform" + String(num)).src = src;
+        document.getElementById("tadpoll_iframeform" + String(num)).style.display = "block";
+        document.getElementById("tadpoll_iframebutton" + String(num)).style.display = "block";
+    }
+    
+    var record_id = "new";
+    function closeForm(id) {
+        document.getElementById("tadpoll_form"+String(id)).style.display = "none";
+        document.getElementById("tadpoll_button"+String(id)).style.display = "none";
+        data1 = document.getElementById("data1form" + String(id)).value;
+        data2 = document.getElementById("data2form" + String(id)).value;
+        //console.log(datain);
+        var data1_key = "data1form" + String(id);
+        var data2_key = "data2form" + String(id);
+        var data_obj = {};
+        if (record_id == "new") {
+            data_obj[data1_key] = data1;
+            data_obj[data2_key] = data2;
+            data_obj["customer_id"]=custParams.id;
+            saveForm(data_obj)
+            .then(record => {
+                record_id = record[0].id; 
+            //console.log(record, record[0].id, record_id);
+            });
+        }
+        else {
+            data_obj["id"] = record_id;
+            data_obj["fields"]={};
+            data_obj["fields"][data1_key] = data1;
+            data_obj["fields"][data2_key] = data2;
+            data_obj["fields"]["customer_id"]=custParams.id;
+            console.log(data_obj, data1_key, data2_key);
+            updateForm(data_obj);
+        }
+        //done_form = true;
+        pause_source_func = false;
+        if (id < custParams.numElements) {
+            //console.log("set done to false, done_form", currentplay)
+            done=false;
+            done_pause = false; 
+            currentplay++;
+            playtime = eval("custParams.element_" + String(currentplay) + "_insert");
+        }
+        player.playVideo();
+    }
+    
+    function closeiframe(id) {
+        document.getElementById("tadpoll_iframeform" + String(id)).style.display = "none";
+        document.getElementById("tadpoll_iframebutton" + String(id)).style.display = "none";
+        pause_source_func = false;
+        if (id < custParams.numElements) {
+            done=false; 
+            currentplay++;
+            playtime = eval("custParams.element_" + String(currentplay) + "_insert");
+        }
+        player.playVideo();
+    }
+    
+    function saveForm(data_obj) {
+        var myHeaders = new Headers();
+        myHeaders.append("Content-Type", "application/json");
+        var requestOptions = {
+            method: "post",
+            headers: myHeaders,
+            redirect: "follow",
+            body: JSON.stringify([data_obj])
+        };
+        console.log(requestOptions);
+        return fetch("https://v1.nocodeapi.com/davegtad/airtable/rQaerrGsnnHzwllE?tableName=Table 4&api_key=GJwptPIUjuDsMsOsz", requestOptions)
+        .then(response => response.json())
+        .then(result => result)
+        .catch(error => console.log('error', error));
+    }
+    function updateForm(data_obj) {
+        var myHeaders = new Headers();
+        myHeaders.append("Content-Type", "application/json");
+        var requestOptions = {
+            method: "put",
+            headers: myHeaders,
+            redirect: "follow",
+            body: JSON.stringify([data_obj])
+        };
+    
+        fetch("https://v1.nocodeapi.com/davegtad/airtable/rQaerrGsnnHzwllE?tableName=Table 4&api_key=GJwptPIUjuDsMsOsz", requestOptions)
+        .then(response => response.text())
+        .then(result => console.log(result))
+        .catch(error => console.log('error', error));
+    }
+    
+    function getParams(script_name) {
+        // Find all script tags
+        var scripts = document.getElementsByTagName("script");
+        // Look through them trying to find ourselves
+        for(var i=0; i<scripts.length; i++) {
+            if(scripts[i].src.indexOf("/" + script_name) > -1) {
+            // Get an array of key=value strings of params
+                var pa = scripts[i].src.split("?").pop().split("&");
+                // Split each key=value into array, the construct js object
+                var p = {};
+                for(var j=0; j<pa.length; j++) {
+                    var kv = pa[j].split("=");
+                    p[kv[0]] = kv[1];
+                }
+                return p;
+            }
+        }
+        // No scripts match
+        return {};
+    }
+  

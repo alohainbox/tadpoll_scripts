@@ -1,0 +1,23 @@
+* {
+    box-sizing: border-box;
+  }
+  .playerPopup{
+    position: relative;
+    width: 500px;
+    margin: auto;
+  }
+  .playerwin {
+    position: relative;
+    height: 400px;
+    width: 500px;
+  }
+  @media only screen and (max-device-width: 480px) {
+    .playerPopup{
+        width: 350px;
+    }
+    .playerwin {
+        height: 280px;
+        width: 350px;
+    }
+  }
+  
