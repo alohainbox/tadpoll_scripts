@@ -7,7 +7,7 @@
     //Local vs release paths
     //var run_mode = "local"
     var path_local = "../dist/";
-    var release_version = "0.0.1";
+    var release_version = "0.0.2";
     var path_release = "https://cdn.jsdelivr.net/gh/np-ally/tadpoll_scripts@" + release_version + "/dist/";
     var search_path_release = "np-ally/tadpoll_scripts@" + release_version + "/dist/";
     
@@ -117,12 +117,23 @@
                                 $("#tadpoll1234").append("<div class='loginPopup' id='tadpoll_login" + String(i) + "'></div>");
                                 $("#tadpoll_login" + String(i)).load(eval("custParams.fields.element_" + String(i) + "_html"), function(){
                                     $("#tadpoll_login" + String(i) + "> div").attr("id", "tadpoll_form" + String(i));
+                                    if (eval("custParams.fields.element_" + String(i) + "_skipbtnenable")== "1") {
+                                        $("#tadpoll_login" + String(i) + "> button").attr("onclick", "closeForm("+String(i)+")");
+                                    }
+                                    else { 
+                                        $("#tadpoll_login" + String(i) + "> button").empty();
+                                    }
                                     $("#tadpoll_login" + String(i) + "> button").attr("id", "tadpoll_button" + String(i));
-                                    $("#tadpoll_login" + String(i) + "> button").attr("onclick", "closeForm("+String(i)+")");
+                                    $("#tadpoll_form" + String(i) + "> div > h2").append(eval("custParams.fields.element_" + String(i) + "_title"));
                                     $("#tadpoll_form" + String(i) + "> div > input").eq(0).attr("id", "data1form" + String(i));
                                     $("#tadpoll_form" + String(i) + "> div > input").eq(1).attr("id", "data2form" + String(i));
+                                    $("#tadpoll_form" + String(i) + "> div > label > p").eq(0).append(eval("custParams.fields.element_" + String(i) + "_question1"));
+                                    $("#tadpoll_form" + String(i) + "> div > input").eq(0).attr("placeholder", eval("custParams.fields.element_" + String(i) + "_placeholder1"));
+                                    $("#tadpoll_form" + String(i) + "> div > label > p").eq(1).append(eval("custParams.fields.element_" + String(i) + "_question2"));
+                                    $("#tadpoll_form" + String(i) + "> div > input").eq(1).attr("placeholder", eval("custParams.fields.element_" + String(i) + "_placeholder2"));
                                     $("#tadpoll_form" + String(i) + "> div > button").eq(0).attr("id", "tadpoll_submit" + String(i));
                                     $("#tadpoll_form" + String(i) + "> div > button").eq(0).attr("onclick", "closeForm("+String(i)+")");
+                                    $("#tadpoll_form" + String(i) + "> div > button").eq(0).append(eval("custParams.fields.element_" + String(i) + "_btntext"));
                                 });
                             }
                             else if(eval("custParams.fields.element_" + String(i) + "_type")=="iframe") {
