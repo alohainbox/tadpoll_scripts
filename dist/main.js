@@ -7,7 +7,7 @@
     //Local vs release paths
     //var run_mode = "local"
     var path_local = "../dist/";
-    var release_version = "0.0.2";
+    var release_version = "0.0.3";
     var path_release = "https://cdn.jsdelivr.net/gh/np-ally/tadpoll_scripts@" + release_version + "/dist/";
     var search_path_release = "np-ally/tadpoll_scripts@" + release_version + "/dist/";
     
@@ -100,17 +100,10 @@
                         "&element_" + String(r) + "_insert=" + eval("custParams.fields.element_" + String(r) + "_insert");
                     }
                     //console.log(video_path)
-                    var duplicate_css = false;
                     loadScript(video_path, "text/javascript")
                     .then(script => {
                         for (let i=1; i<=custParams.fields.numElements; i++){
-                            duplicate_css = false;
-                            for (let u=i+1; u<=custParams.fields.numElements; u++){
-                                if (eval("custParams.fields.element_" + String(i) + "_css")==eval("custParams.fields.element_" + String(u) + "_css")){
-                                    duplicate_css = true;
-                                }
-                            }
-                            if (!duplicate_css) {
+                            if (!checkdupcss(eval("custParams.fields.element_" + String(i) + "_css"))){
                                 loadcss(eval("custParams.fields.element_" + String(i) + "_css"));
                             }
                             if (eval("custParams.fields.element_" + String(i) + "_type")=="form"){
@@ -172,6 +165,19 @@ function getParams(script_name) {
     }
     // No scripts match
     return {};
+}
+function checkdupcss(css_name) {
+    // Find all script tags
+    var styles = document.getElementsByTagName("link");
+    var dup = false;
+    // Look through them trying to find ourselves
+    for(var i=0; i<styles.length; i++) {
+        if(styles[i].href.indexOf(css_name) > -1) {
+            dup = true;
+            break;
+        }
+    }
+    return dup;
 }
 
 function getUserParams(id) {
