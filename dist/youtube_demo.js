@@ -1,4 +1,4 @@
-    var release_version = "0.0.3";
+    var release_version = "0.1.0";
     var search_path_release = "np-ally/tadpoll_scripts@" + release_version + "/dist/";
     if (window.location.protocol === "file:") {var search_path = '';}
     else { search_path = search_path_release; }
@@ -6,9 +6,9 @@
     //get customer id
     var custParams = getParams(search_path + "youtube_demo.js");
     //console.log("id", custParams);
-    
+    var pageId = "c" + custParams.cid + "v" + custParams.id;
     //Add container elements to format video
-    $("#tadpoll1234").append("<div class='playerPopup'><div class='playerwin' id='player'></div></div>");
+    $("#tadpoll_" + pageId).append("<div class='playerPopup'><div class='playerwin' id='player'></div></div>");
     
     
  // This code loads the IFrame Player API code asynchronously.
@@ -57,7 +57,7 @@
     var done_pause = false;
     var timep = 0;
     var pause_source_func = false;
-    var currentplay = 1;
+    var currentplay = 0;
     var playtime = eval("custParams.element_" + String(currentplay) + "_insert");
     //console.log("playtime", playtime);
     
@@ -79,7 +79,7 @@
         }
         if (event.data == YT.PlayerState.PAUSED && done) {
             timep = Math.round(player.getCurrentTime());
-            console.log("paused & done", timep, playtime, pause_source_func);
+            //console.log("paused & done", timep, playtime, pause_source_func, done_pause);
                 if (timep < playtime && !pause_source_func) {
                     //console.log("set done to false")
                     done = false;
@@ -112,28 +112,30 @@
         player.playVideo();
     }
     function openForm(num) {
-        document.getElementById("tadpoll_form" + String(num)).style.display = "block";
-        document.getElementById("tadpoll_button" + String(num)).style.display = "block";
+        document.getElementById("tadpoll_form" + pageId + "f" + String(num)).style.display = "block";
+        document.getElementById("tadpoll_button" + pageId + "f" + String(num)).style.display = "block";
     }
     function openiframe(num) {
-        document.getElementById("tadpoll_iframeform" + String(num)).style.display = "block";
-        document.getElementById("tadpoll_iframebutton" + String(num)).style.display = "block";
+        document.getElementById("tadpoll_iframeform" + pageId + "f" + String(num)).style.display = "block";
+        document.getElementById("tadpoll_iframebutton" + pageId + "f" + String(num)).style.display = "block";
     }
     
     var record_id = "new";
     function closeForm(id) {
-        document.getElementById("tadpoll_form"+String(id)).style.display = "none";
-        document.getElementById("tadpoll_button"+String(id)).style.display = "none";
-        data1 = document.getElementById("data1form" + String(id)).value;
-        data2 = document.getElementById("data2form" + String(id)).value;
-        var data1_key = "data1form" + String(id);
-        var data2_key = "data2form" + String(id);
+        document.getElementById("tadpoll_form"+id).style.display = "none";
+        document.getElementById("tadpoll_button"+id).style.display = "none";
+        data1 = document.getElementById("data1form" + id).value;
+        data2 = document.getElementById("data2form" + id).value;
+        const playid = id.split('f')[1];
+        var data1_key = "data1form" + playid;
+        var data2_key = "data2form" + playid;
         var data_obj = {};
         if (record_id == "new") {
             data_obj[data1_key] = data1;
             data_obj[data2_key] = data2;
-            data_obj["customer_id"]=custParams.id;
-            saveForm(data_obj)
+            data_obj["customer_id"]=custParams.cid;
+            data_obj["video_id"]=custParams.id;
+            saveForm(data_obj, "customerData")
             .then(record => {
                 record_id = record[0].id; 
             //console.log(record, record[0].id, record_id);
@@ -144,13 +146,14 @@
             data_obj["fields"]={};
             data_obj["fields"][data1_key] = data1;
             data_obj["fields"][data2_key] = data2;
-            data_obj["fields"]["customer_id"]=custParams.id;
+            data_obj["fields"]["customer_id"]=custParams.cid;
+            data_obj["fields"]["video_id"]=custParams.id;
             //console.log(data_obj, data1_key, data2_key);
-            updateForm(data_obj);
+            updateForm(data_obj, "customerData");
         }
         pauseVideo();
         pause_source_func = false;
-        if (id < custParams.numElements) {
+        if (playid < custParams.numElements-1) {
             //console.log("set done to false, done_form", currentplay)
             done=false;
             done_pause = false; 
@@ -162,12 +165,14 @@
     }
     
     function closeiframe(id) {
-        document.getElementById("tadpoll_iframeform" + String(id)).style.display = "none";
-        document.getElementById("tadpoll_iframebutton" + String(id)).style.display = "none";
+        document.getElementById("tadpoll_iframeform" + id).style.display = "none";
+        document.getElementById("tadpoll_iframebutton" + id).style.display = "none";
+        const playid = id.split('f')[1];
         pauseVideo();
         pause_source_func = false;
-        if (id < custParams.numElements) {
+        if (playid < custParams.numElements-1) {
             done=false; 
+            done_pause = false; 
             currentplay++;
             playtime = eval("custParams.element_" + String(currentplay) + "_insert");
         }
@@ -176,7 +181,7 @@
         playVideo();
     }
     
-    function saveForm(data_obj) {
+    function saveForm(data_obj, table) {
         var myHeaders = new Headers();
         myHeaders.append("Content-Type", "application/json");
         var requestOptions = {
@@ -186,12 +191,12 @@
             body: JSON.stringify([data_obj])
         };
         //console.log(requestOptions);
-        return fetch("https://v1.nocodeapi.com/davegtad/airtable/rQaerrGsnnHzwllE?tableName=Table 4&api_key=GJwptPIUjuDsMsOsz", requestOptions)
+        return fetch("https://v1.nocodeapi.com/davegtad/airtable/rQaerrGsnnHzwllE?tableName="+table+"&api_key=GJwptPIUjuDsMsOsz", requestOptions)
         .then(response => response.json())
         .then(result => result)
         .catch(error => console.log('error', error));
     }
-    function updateForm(data_obj) {
+    function updateForm(data_obj, table) {
         var myHeaders = new Headers();
         myHeaders.append("Content-Type", "application/json");
         var requestOptions = {
@@ -201,7 +206,7 @@
             body: JSON.stringify([data_obj])
         };
     
-        fetch("https://v1.nocodeapi.com/davegtad/airtable/rQaerrGsnnHzwllE?tableName=Table 4&api_key=GJwptPIUjuDsMsOsz", requestOptions)
+        fetch("https://v1.nocodeapi.com/davegtad/airtable/rQaerrGsnnHzwllE?tableName="+table+"&api_key=GJwptPIUjuDsMsOsz", requestOptions)
         .then(response => response.text())
         .then(result => console.log(result))
         .catch(error => console.log('error', error));
