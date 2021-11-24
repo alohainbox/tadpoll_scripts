@@ -7,7 +7,7 @@
     //Local vs release paths
     //var run_mode = "local"
     var path_local = "../dist/";
-    var release_version = "0.1.1";
+    var release_version = "0.1.2";
     var path_release = "https://cdn.jsdelivr.net/gh/np-ally/tadpoll_scripts@" + release_version + "/dist/";
     var search_path_release = "np-ally/tadpoll_scripts@" + release_version + "/dist/";
     
@@ -91,7 +91,7 @@
                     if (vidindex == undefined){alert( 'Error: video is not in customer list');}
                     getUserParams("id=" + eval("custParams[0].fields['video_id (from video_id)']["+vidindex+"]"), "videos")
                     .then(vidParams => {
-                        console.log(vidParams[0]);
+                        //console.log(vidParams[0]);
                     if (vidParams[0].fields.domain != window.location.hostname && vidParams[0].fields.domain != "test") {
                         alert( 'Error: Incorrect User Domain' );
                         console.log('Invalid domain', window.location.hostname);
@@ -118,7 +118,7 @@
                         //console.log(filterFormula);
                         getUserParams(filterFormula, "elements")
                         .then(elParams => {
-                            console.log(elParams, vidParams[0].fields['id (from elements)']);
+                            //console.log(elParams, vidParams[0].fields['id (from elements)']);
                             var ind;
                             let order = [];
                             for (let i=0; i<vidParams[0].fields['id (from elements)'].length; i++) {    
@@ -136,7 +136,7 @@
                                 "&element_" + String(i) + "_insert=" + elParams[ind].fields.insert;
                                 //console.log("create video path",ind, video_path);
                             }
-                            console.log(video_path, order)
+                            //console.log(video_path, order)
                             loadScript(video_path, "text/javascript")
                             .then(() => {
                                 for (const [i, value] of order.entries()){

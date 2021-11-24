@@ -1,4 +1,4 @@
-var release_version = "0.1.1";
+var release_version = "0.1.2";
 var search_path_release = "np-ally/tadpoll_scripts@" + release_version + "/dist/";
 if (window.location.protocol === "file:") {var search_path = '';}
 else { search_path = search_path_release; }
@@ -8,11 +8,26 @@ var custParams = getParams(search_path + "vimeo_td.js");
 //console.log("id", custParams);
 var pageId = "c" + custParams.cid + "v" + custParams.id;
 //Add container elements to format video
+var playeroptions = {
+    maxwidth: 500,
+    maxheight: 400,
+    title: false,
+    pip: false,
+    autoplay: false
+  };
+var playeroptstring = "?";
+var pindex = 1;
+for(let key in playeroptions){
+    playeroptstring = playeroptstring + key + "=" + playeroptions[key];
+    if (pindex < Object.keys(playeroptions).length){ playeroptstring = playeroptstring + "&";}
+    pindex++;
+}
+//console.log(playeroptstring);
 $("#tadpoll_" + pageId).append("<div class='playerPopup'><iframe class='playerwin' id='player" + pageId + 
-"' src='https://player.vimeo.com/video/" + custParams.video + "'></iframe></div>");
+"' src=https://player.vimeo.com/video/"+ custParams.video + playeroptstring + "' frameborder='0'></iframe></div>");
 
 // This code loads the IFrame Player API code asynchronously.
-var playerframe, player;
+var player, playerframe;
 loadScript("https://player.vimeo.com/api/player.js", "text/javascript")
 .then(() => setupvid());
 
