@@ -7,7 +7,7 @@
     //Local vs release paths
     //var run_mode = "local"
     var path_local = "../dist/";
-    var release_version = "0.1.0";
+    var release_version = "0.1.1";
     var path_release = "https://cdn.jsdelivr.net/gh/np-ally/tadpoll_scripts@" + release_version + "/dist/";
     var search_path_release = "np-ally/tadpoll_scripts@" + release_version + "/dist/";
     
@@ -68,11 +68,6 @@
         });
         css_link.appendTo('head');
     }
-    function loadhtml(src, id) {
-        return new Promise(function(resolve, reject){
-            
-        });
-    }
 
     /******** Our main function ********/
     function main() { 
@@ -89,13 +84,14 @@
                 }
                 else{
                     //console.log(custParams);
-                    var vidindex = 0;
+                    var vidindex;
                     for (let i=0; i<custParams[0].fields['video_id (from video_id)'].length; i++){
                         if (custParams[0].fields['video_id (from video_id)'][i]==cdata.video){vidindex=i;}
                     }
+                    if (vidindex == undefined){alert( 'Error: video is not in customer list');}
                     getUserParams("id=" + eval("custParams[0].fields['video_id (from video_id)']["+vidindex+"]"), "videos")
                     .then(vidParams => {
-                        //console.log(vidParams[0]);
+                        console.log(vidParams[0]);
                     if (vidParams[0].fields.domain != window.location.hostname && vidParams[0].fields.domain != "test") {
                         alert( 'Error: Incorrect User Domain' );
                         console.log('Invalid domain', window.location.hostname);
@@ -103,8 +99,16 @@
                     else {
                         /*****Load video and form scripts****/
                         loadcss(path + "player.css");
-                        var video_path = path + "youtube_demo.js?id=" + vidParams[0].fields.id + "&video=" + 
-                        vidParams[0].fields.video + "&numElements=" + vidParams[0].fields.elements.length + "&cid=" + custParams[0].fields.id;
+                        var video_path;
+                        if (vidParams[0].fields.video_type == "youtube"){
+                            video_path = path + "youtube_demo.js?id=" + vidParams[0].fields.id + "&video=" + 
+                            vidParams[0].fields.video + "&numElements=" + vidParams[0].fields.elements.length + "&cid=" + custParams[0].fields.id;
+                        }
+                        else if (vidParams[0].fields.video_type == "vimeo"){
+                            video_path = path + "vimeo_td.js?id=" + vidParams[0].fields.id + "&video=" + 
+                            vidParams[0].fields.video + "&numElements=" + vidParams[0].fields.elements.length + "&cid=" + custParams[0].fields.id;
+                        }
+                        else {alert( 'Error: unsupported video player');}
                         var filterFormula = "OR(";
                         for (let r = 0; r<vidParams[0].fields.elements.length; r++){
                             filterFormula = filterFormula + "id=" + vidParams[0].fields['id (from elements)'][r];
@@ -114,52 +118,59 @@
                         //console.log(filterFormula);
                         getUserParams(filterFormula, "elements")
                         .then(elParams => {
-                            //console.log(elParams, vidParams[0].fields['id (from elements)']);
-                            var val;
-                            for (const [i, value] of vidParams[0].fields['id (from elements)'].entries()) {    
-                                val = parseInt(value)-1; //requires id in video table to match row id
-                                //console.log("value", value, val, i, video_path);
-                                video_path = video_path + 
-                                "&element_" + String(i) + "_type=" + elParams[val].fields.type +
-                                "&element_" + String(i) + "_insert=" + elParams[val].fields.insert;
-                            }
-                            //console.log(video_path)
-                            loadScript(video_path, "text/javascript")
-                            .then(script => {
-                                var ind;
-                                for (const [i, value] of vidParams[0].fields['id (from elements)'].entries()){
-                                    ind = parseInt(value)-1;
-                                    if (!checkdupcss(elParams[ind].fields.css)){
-                                        loadcss(elParams[ind].fields.css);
+                            console.log(elParams, vidParams[0].fields['id (from elements)']);
+                            var ind;
+                            let order = [];
+                            for (let i=0; i<vidParams[0].fields['id (from elements)'].length; i++) {    
+                                //requires id in element table to match row id
+                                ind=undefined;
+                                for(let y=0; y<elParams.length; y++){
+                                    if (vidParams[0].fields['id (from elements)'][i] == elParams[y].fields.id) {
+                                        ind=y;
+                                        order[i] = y;
+                                        break;
                                     }
-                                    if (elParams[ind].fields.type == "form"){
+                                }
+                                video_path = video_path + 
+                                "&element_" + String(i) + "_type=" + elParams[ind].fields.type +
+                                "&element_" + String(i) + "_insert=" + elParams[ind].fields.insert;
+                                //console.log("create video path",ind, video_path);
+                            }
+                            console.log(video_path, order)
+                            loadScript(video_path, "text/javascript")
+                            .then(() => {
+                                for (const [i, value] of order.entries()){
+                                    if (!checkdupcss(elParams[value].fields.css)){
+                                        loadcss(elParams[value].fields.css);
+                                    }
+                                    if (elParams[value].fields.type == "form"){
                                         $("#tadpoll_"+pageId).append("<div class='loginPopup' id='tadpoll_login" + pageId + "f" + String(i) + "'></div>");
-                                        $("#tadpoll_login" + pageId + "f" + String(i)).load(elParams[ind].fields.html, function(){
+                                        $("#tadpoll_login" + pageId + "f" + String(i)).load(elParams[value].fields.html, function(){
                                             $("#tadpoll_login" + pageId +"f" +  String(i) + "> div").attr("id", "tadpoll_form" + pageId + "f" + String(i));
-                                            if (elParams[ind].fields.skipbtnenable == "1") {
+                                            if (elParams[value].fields.skipbtnenable == "1") {
                                                 $("#tadpoll_login" + pageId + "f" + String(i) + "> button").attr("onclick", "closeForm('" + pageId+"f" + String(i)+"')");
                                             }
                                             else { 
                                                 $("#tadpoll_login" + pageId + "f" + String(i) + "> button").empty();
                                             }
                                             $("#tadpoll_login" + pageId + "f" + String(i) + "> button").attr("id", "tadpoll_button" + pageId + "f" + String(i));
-                                            $("#tadpoll_form" + pageId + "f" + String(i) + "> div > h2").append(elParams[ind].fields.title);
+                                            $("#tadpoll_form" + pageId + "f" + String(i) + "> div > h2").append(elParams[value].fields.title);
                                             $("#tadpoll_form" + pageId + "f" + String(i) + "> div > input").eq(0).attr("id", "data1form" + pageId + "f" + String(i));
                                             $("#tadpoll_form" + pageId + "f" + String(i) + "> div > input").eq(1).attr("id", "data2form" + pageId + "f" + String(i));
-                                            $("#tadpoll_form" + pageId + "f" + String(i) + "> div > label > p").eq(0).append(elParams[ind].fields.question1);
-                                            $("#tadpoll_form" + pageId + "f" + String(i) + "> div > input").eq(0).attr("placeholder", elParams[ind].fields.placeholder1);
-                                            $("#tadpoll_form" + pageId + "f" + String(i) + "> div > label > p").eq(1).append(elParams[ind].fields.question2);
-                                            $("#tadpoll_form" + pageId + "f" + String(i) + "> div > input").eq(1).attr("placeholder", elParams[ind].fields.placeholder2);
+                                            $("#tadpoll_form" + pageId + "f" + String(i) + "> div > label > p").eq(0).append(elParams[value].fields.question1);
+                                            $("#tadpoll_form" + pageId + "f" + String(i) + "> div > input").eq(0).attr("placeholder", elParams[value].fields.placeholder1);
+                                            $("#tadpoll_form" + pageId + "f" + String(i) + "> div > label > p").eq(1).append(elParams[value].fields.question2);
+                                            $("#tadpoll_form" + pageId + "f" + String(i) + "> div > input").eq(1).attr("placeholder", elParams[value].fields.placeholder2);
                                             $("#tadpoll_form" + pageId + "f" + String(i) + "> div > button").eq(0).attr("id", "tadpoll_submit" + pageId + "f" +String(i));
                                             $("#tadpoll_form" + pageId + "f" + String(i) + "> div > button").eq(0).attr("onclick", "closeForm('" + pageId + "f" + String(i)+"')");
-                                            $("#tadpoll_form" + pageId + "f" + String(i) + "> div > button").eq(0).append(elParams[ind].fields.btntext);
+                                            $("#tadpoll_form" + pageId + "f" + String(i) + "> div > button").eq(0).append(elParams[value].fields.btntext);
                                         });
                                     }
-                                    else if(elParams[ind].fields.type =="iframe") {
+                                    else if(elParams[value].fields.type =="iframe") {
                                         $("#tadpoll_" + pageId).append("<div class='iframePopup' id='tadpoll_iframe" + pageId + "f" + String(i) + "'></div>");
-                                        $("#tadpoll_iframe" + pageId + "f" + String(i)).load(elParams[ind].fields.html, function(){
+                                        $("#tadpoll_iframe" + pageId + "f" + String(i)).load(elParams[value].fields.html, function(){
                                             $("#tadpoll_iframe" + pageId + "f" + String(i) + "> iframe").attr("id", "tadpoll_iframeform" + pageId + "f" + String(i));
-                                            $("#tadpoll_iframe" + pageId + "f" + String(i) + "> iframe").attr("src", elParams[parseInt(value)-1].fields.src); //ind variable did not work consistently here
+                                            $("#tadpoll_iframe" + pageId + "f" + String(i) + "> iframe").attr("src", elParams[value].fields.src); 
                                             $("#tadpoll_iframe" + pageId + "f" + String(i) + "> button").attr("id", "tadpoll_iframebutton" + pageId + "f" + String(i));
                                             $("#tadpoll_iframe" + pageId + "f" + String(i) + "> button").attr("onclick", "closeiframe('"+ pageId + "f" + String(i)+"')");
                                         });
