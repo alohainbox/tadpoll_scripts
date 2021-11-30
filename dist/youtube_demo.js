@@ -100,7 +100,7 @@
                         //console.log("open iframe", currentplay, timep, pause_source_func);
                     }
                     else if (eval("custParams.element_" + String(currentplay) + "_type")=="iframe_toggle"){
-                        openiframetoggle(currentplay);
+                        openiframebutton(currentplay);
                         //console.log("open iframe", currentplay, timep, pause_source_func);
                     }
                     done_pause = true;
@@ -124,6 +124,15 @@
         document.getElementById("tadpoll_iframebutton" + pageId + "f" + String(num)).style.display = "block";
     }
     
+    function openiframebutton(num) {
+        pauseVideo();
+        pause_source_func = false;
+        $("#tadpoll_iframe" + pageId + "f" + String(num) + "> button").text(clnTxt("custParams.element_" + String(num) + "_toggleBtnTextOpen"));
+        $("#tadpoll_iframe" + pageId + "f" + String(num) + "> button").attr("onclick", "openiframetoggle('"+ num + "')");
+        document.getElementById("tadpoll_iframebutton" + pageId + "f" + String(num)).style.display = "block";
+        document.getElementById("tadpoll_iframebutton" + pageId + "f" + String(num)).className = "btn_close";
+    }
+
     function openiframetoggle(num) {
         pauseVideo();
         pause_source_func = false;
