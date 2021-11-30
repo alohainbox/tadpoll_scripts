@@ -1,4 +1,4 @@
-    var release_version = "0.1.2";
+    var release_version = "0.1.3";
     var search_path_release = "np-ally/tadpoll_scripts@" + release_version + "/dist/";
     if (window.location.protocol === "file:") {var search_path = '';}
     else { search_path = search_path_release; }
@@ -99,6 +99,10 @@
                         openiframe(currentplay);
                         //console.log("open iframe", currentplay, timep, pause_source_func);
                     }
+                    else if (eval("custParams.element_" + String(currentplay) + "_type")=="iframe_toggle"){
+                        openiframetoggle(currentplay);
+                        //console.log("open iframe", currentplay, timep, pause_source_func);
+                    }
                     done_pause = true;
                     done = false;
                 }
@@ -120,6 +124,21 @@
         document.getElementById("tadpoll_iframebutton" + pageId + "f" + String(num)).style.display = "block";
     }
     
+    function openiframetoggle(num) {
+        pauseVideo();
+        pause_source_func = false;
+        document.getElementById("tadpoll_iframeform" + pageId + "f" + String(num)).style.display = "block";
+        $("#tadpoll_iframe" + pageId + "f" + String(num) + "> button").text(clnTxt("custParams.element_" + String(num) + "_toggleBtnTextClose"));
+        $("#tadpoll_iframe" + pageId + "f" + String(num) + "> button").attr("onclick", "closeiframetoggle('"+ pageId + "f" + String(num) +"')");
+        document.getElementById("tadpoll_iframebutton" + pageId + "f" + String(num)).style.display = "block";
+        document.getElementById("tadpoll_iframebutton" + pageId + "f" + String(num)).className = "btn_fs";
+    }
+
+    function clnTxt(txt){
+        var newtxt = eval(txt).replace(/%20/g, " ");
+        return newtxt;
+    }
+
     var record_id = "new";
     function closeForm(id) {
         document.getElementById("tadpoll_form"+id).style.display = "none";
@@ -177,6 +196,27 @@
             playtime = eval("custParams.element_" + String(currentplay) + "_insert");
         }
         else {done = true;}
+        //console.log("iframeclose", id, currentplay, done);
+        playVideo();
+    }
+
+    function closeiframetoggle(id) {
+        document.getElementById("tadpoll_iframeform" + id).style.display = "none";
+        const playid = id.split('f')[1];
+        $("#tadpoll_iframebutton" + id).text(clnTxt("custParams.element_" + playid + "_toggleBtnTextOpen"));
+        $("#tadpoll_iframebutton" + id).attr("onclick", "openiframetoggle('"+ playid +"')");
+        document.getElementById("tadpoll_iframebutton" + id).className = "btn_close";
+        
+        
+        pauseVideo();
+        pause_source_func = false;
+        if (playid < custParams.numElements-1 && done_pause) {
+            done=false; 
+            done_pause = false; 
+            currentplay++;
+            playtime = eval("custParams.element_" + String(currentplay) + "_insert");
+        }
+        else if (done_pause) {done = true;}
         //console.log("iframeclose", id, currentplay, done);
         playVideo();
     }

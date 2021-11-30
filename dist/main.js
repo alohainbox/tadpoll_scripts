@@ -7,7 +7,7 @@
     //Local vs release paths
     //var run_mode = "local"
     var path_local = "../dist/";
-    var release_version = "0.1.2";
+    var release_version = "0.1.3";
     var path_release = "https://cdn.jsdelivr.net/gh/np-ally/tadpoll_scripts@" + release_version + "/dist/";
     var search_path_release = "np-ally/tadpoll_scripts@" + release_version + "/dist/";
     
@@ -73,6 +73,7 @@
     function main() { 
         jQuery(document).ready(function($) {  
 
+            loadcss("https://fonts.googleapis.com/css?family=Roboto");
             var cdata = getParams(search_path + "main.js");
             var pageId = "c"+cdata.id+"v"+cdata.video;
             //console.log(cdata, pageId);
@@ -134,7 +135,11 @@
                                 video_path = video_path + 
                                 "&element_" + String(i) + "_type=" + elParams[ind].fields.type +
                                 "&element_" + String(i) + "_insert=" + elParams[ind].fields.insert;
-                                //console.log("create video path",ind, video_path);
+                                if (elParams[ind].fields.type == "iframe_toggle"){
+                                    video_path = video_path + "&element_" + String(i) + "_toggleBtnTextOpen=" + elParams[ind].fields.toggleBtnTextOpen +
+                                    "&element_" + String(i) + "_toggleBtnTextClose=" + elParams[ind].fields.toggleBtnTextClose;
+                                }
+                                    //console.log("create video path",ind, video_path);
                             }
                             //console.log(video_path, order)
                             loadScript(video_path, "text/javascript")
@@ -166,13 +171,15 @@
                                             $("#tadpoll_form" + pageId + "f" + String(i) + "> div > button").eq(0).append(elParams[value].fields.btntext);
                                         });
                                     }
-                                    else if(elParams[value].fields.type =="iframe") {
+                                    else if(elParams[value].fields.type =="iframe" || elParams[value].fields.type =="iframe_toggle") {
                                         $("#tadpoll_" + pageId).append("<div class='iframePopup' id='tadpoll_iframe" + pageId + "f" + String(i) + "'></div>");
                                         $("#tadpoll_iframe" + pageId + "f" + String(i)).load(elParams[value].fields.html, function(){
                                             $("#tadpoll_iframe" + pageId + "f" + String(i) + "> iframe").attr("id", "tadpoll_iframeform" + pageId + "f" + String(i));
                                             $("#tadpoll_iframe" + pageId + "f" + String(i) + "> iframe").attr("src", elParams[value].fields.src); 
                                             $("#tadpoll_iframe" + pageId + "f" + String(i) + "> button").attr("id", "tadpoll_iframebutton" + pageId + "f" + String(i));
-                                            $("#tadpoll_iframe" + pageId + "f" + String(i) + "> button").attr("onclick", "closeiframe('"+ pageId + "f" + String(i)+"')");
+                                            if (elParams[value].fields.type =="iframe") {
+                                                $("#tadpoll_iframe" + pageId + "f" + String(i) + "> button").attr("onclick", "closeiframe('"+ pageId + "f" + String(i)+"')");
+                                            }
                                         });
                                     }
                                 }
