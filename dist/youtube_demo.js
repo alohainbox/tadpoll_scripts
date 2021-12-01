@@ -1,4 +1,4 @@
-    var release_version = "0.1.3";
+    var release_version = "0.1.5";
     var search_path_release = "np-ally/tadpoll_scripts@" + release_version + "/dist/";
     if (window.location.protocol === "file:") {var search_path = '';}
     else { search_path = search_path_release; }
@@ -68,12 +68,20 @@
             //console.log(playtime, timep, (playtime-timep)*1000, done_pause);
             
             if (timep >= playtime && !done_pause){ 
-                pauseVideo();
+                if (eval("custParams.element_" + String(currentplay) + "_type")!="iframe_toggle"){
+                    pauseVideo();
+                }
                 //console.log("pause in playing"); 
             }
             else { 
                 //console.log("set time out in playing to ", ((playtime-timep)*1000)/playbackrate)
-                setTimeout(pauseVideo, ((playtime-timep)*1000)/playbackrate); 
+                if (eval("custParams.element_" + String(currentplay) + "_type")!="iframe_toggle"){
+                    setTimeout(pauseVideo, ((playtime-timep)*1000)/playbackrate);
+                }
+                else if (eval("custParams.element_" + String(currentplay) + "_type")=="iframe_toggle"){
+                    //console.log("open iframebutton", currentplay, timep, playtime);
+                    setTimeout(openiframebutton, ((playtime-timep)*1000)/playbackrate, currentplay);
+                } 
             }
             done = true;
         }
@@ -99,10 +107,7 @@
                         openiframe(currentplay);
                         //console.log("open iframe", currentplay, timep, pause_source_func);
                     }
-                    else if (eval("custParams.element_" + String(currentplay) + "_type")=="iframe_toggle"){
-                        openiframebutton(currentplay);
-                        //console.log("open iframe", currentplay, timep, pause_source_func);
-                    }
+                    
                     done_pause = true;
                     done = false;
                 }
@@ -125,12 +130,18 @@
     }
     
     function openiframebutton(num) {
-        pauseVideo();
-        pause_source_func = false;
         $("#tadpoll_iframe" + pageId + "f" + String(num) + "> button").text(clnTxt("custParams.element_" + String(num) + "_toggleBtnTextOpen"));
         $("#tadpoll_iframe" + pageId + "f" + String(num) + "> button").attr("onclick", "openiframetoggle('"+ num + "')");
         document.getElementById("tadpoll_iframebutton" + pageId + "f" + String(num)).style.display = "block";
         document.getElementById("tadpoll_iframebutton" + pageId + "f" + String(num)).className = "btn_close";
+
+        if (num < custParams.numElements-1) {
+            done=false; 
+            done_pause = false; 
+            currentplay++;
+            playtime = eval("custParams.element_" + String(currentplay) + "_insert");
+        }
+        else {done = true;}
     }
 
     function openiframetoggle(num) {
@@ -216,16 +227,6 @@
         $("#tadpoll_iframebutton" + id).attr("onclick", "openiframetoggle('"+ playid +"')");
         document.getElementById("tadpoll_iframebutton" + id).className = "btn_close";
         
-        
-        pauseVideo();
-        pause_source_func = false;
-        if (playid < custParams.numElements-1 && done_pause) {
-            done=false; 
-            done_pause = false; 
-            currentplay++;
-            playtime = eval("custParams.element_" + String(currentplay) + "_insert");
-        }
-        else if (done_pause) {done = true;}
         //console.log("iframeclose", id, currentplay, done);
         playVideo();
     }

@@ -1,4 +1,4 @@
-var release_version = "0.1.3";
+var release_version = "0.1.5";
 var search_path_release = "np-ally/tadpoll_scripts@" + release_version + "/dist/";
 if (window.location.protocol === "file:") {var search_path = '';}
 else { search_path = search_path_release; }
@@ -50,9 +50,16 @@ var onTimeEvent = function onTimeStateChange(event) {
         timep = Math.round(event.seconds);
         //console.log("OnTime", playtime, timep, (playtime-timep)*1000, done_pause);
         
-        if (timep >= playtime && !done_pause){ 
-            pauseVideo();
-            //console.log("pause in time event"); 
+        if (timep >= playtime){ 
+            if (eval("custParams.element_" + String(currentplay) + "_type")!="iframe_toggle" && !done_pause){
+                pauseVideo();
+                //console.log("pause in time event");
+            }
+            else if(eval("custParams.element_" + String(currentplay) + "_type")=="iframe_toggle"){
+                openiframebutton(currentplay);
+            }
+            
+             
         }
 }
 
@@ -101,12 +108,16 @@ function openiframe(num) {
 }
 
 function openiframebutton(num) {
-    pauseVideo();
-    pause_source_func = false;
     $("#tadpoll_iframe" + pageId + "f" + String(num) + "> button").text(clnTxt("custParams.element_" + String(num) + "_toggleBtnTextOpen"));
     $("#tadpoll_iframe" + pageId + "f" + String(num) + "> button").attr("onclick", "openiframetoggle('"+ num + "')");
     document.getElementById("tadpoll_iframebutton" + pageId + "f" + String(num)).style.display = "block";
     document.getElementById("tadpoll_iframebutton" + pageId + "f" + String(num)).className = "btn_close";
+
+    if (num < custParams.numElements-1) {
+            done_pause = false; 
+            currentplay++;
+            playtime = eval("custParams.element_" + String(currentplay) + "_insert");
+    }
 }
 
 function openiframetoggle(num) {
@@ -187,15 +198,7 @@ function closeiframetoggle(id) {
     $("#tadpoll_iframebutton" + id).text(clnTxt("custParams.element_" + playid + "_toggleBtnTextOpen"));
     $("#tadpoll_iframebutton" + id).attr("onclick", "openiframetoggle('"+ playid +"')");
     document.getElementById("tadpoll_iframebutton" + id).className = "btn_close";
-    
-    
-    pauseVideo();
-    pause_source_func = false;
-    if (playid < custParams.numElements-1 && done_pause) { 
-        done_pause = false; 
-        currentplay++;
-        playtime = eval("custParams.element_" + String(currentplay) + "_insert");
-    }
+        
     //console.log("iframeclose", id, currentplay, done);
     playVideo();
 }
