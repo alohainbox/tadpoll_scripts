@@ -1,14 +1,14 @@
-    var release_version = "0.0.1";
+    var release_version = "0.1.5";
     var search_path_release = "np-ally/tadpoll_scripts@" + release_version + "/dist/";
     if (window.location.protocol === "file:") {var search_path = '';}
     else { search_path = search_path_release; }
 
     //get customer id
     var custParams = getParams(search_path + "youtube_demo.js");
-    console.log("id", custParams);
-    
+    //console.log("id", custParams);
+    var pageId = "c" + custParams.cid + "v" + custParams.id;
     //Add container elements to format video
-    $("#tadpoll1234").append("<div class='playerPopup'><div class='playerwin' id='player'></div></div>");
+    $("#tadpoll_" + pageId).append("<div class='playerPopup'><div class='playerwin' id='player'></div></div>");
     
     
  // This code loads the IFrame Player API code asynchronously.
@@ -54,88 +54,127 @@
     
   // The API calls this function when the player's state changes.
     var done = false;
-    var done_form = false;
     var done_pause = false;
     var timep = 0;
     var pause_source_func = false;
-    var currentplay = 1;
+    var currentplay = 0;
     var playtime = eval("custParams.element_" + String(currentplay) + "_insert");
-    console.log("playtime", playtime);
+    //console.log("playtime", playtime);
     
     
     function onPlayerStateChange(event) {
         if (event.data == YT.PlayerState.PLAYING && !done) {
             timep = Math.round(player.getCurrentTime());
-            //console.log(playtime, timep, (playtime-timep)*1000);
+            //console.log(playtime, timep, (playtime-timep)*1000, done_pause);
             
-            if (timep >= playtime){ //&& !done_form){ 
-                pauseVideo();
-                console.log("pause in playing"); 
+            if (timep >= playtime && !done_pause){ 
+                if (eval("custParams.element_" + String(currentplay) + "_type")!="iframe_toggle"){
+                    pauseVideo();
+                }
+                //console.log("pause in playing"); 
             }
-            else {//if (!done_form) { 
-                console.log("set time out in playing to ", ((playtime-timep)*1000)/playbackrate)
-                setTimeout(pauseVideo, ((playtime-timep)*1000)/playbackrate); 
+            else { 
+                //console.log("set time out in playing to ", ((playtime-timep)*1000)/playbackrate)
+                if (eval("custParams.element_" + String(currentplay) + "_type")!="iframe_toggle"){
+                    setTimeout(pauseVideo, ((playtime-timep)*1000)/playbackrate);
+                }
+                else if (eval("custParams.element_" + String(currentplay) + "_type")=="iframe_toggle"){
+                    //console.log("open iframebutton", currentplay, timep, playtime);
+                    setTimeout(openiframebutton, ((playtime-timep)*1000)/playbackrate, currentplay);
+                } 
             }
             done = true;
         }
         if (event.data == YT.PlayerState.PAUSED && done) {
             timep = Math.round(player.getCurrentTime());
-            console.log("paused & done", timep, playtime);
-            //if (!done_form){
+            //console.log("paused & done", timep, playtime, pause_source_func, done_pause);
                 if (timep < playtime && !pause_source_func) {
-                    console.log("set done to false")
+                    //console.log("set done to false")
                     done = false;
                 }
                 else if (timep < playtime && pause_source_func) {
                     pause_source_func = false;
-                    player.playVideo();
+                    playVideo();
                     done = false;
-                    console.log("pause source")
+                    //console.log("pause source")
                 }
                 else if (timep >= playtime && !done_pause) {
                     if (eval("custParams.element_" + String(currentplay) + "_type")=="form"){
                         openForm(currentplay);
-                        console.log("open form", currentplay, timep);
+                        //console.log("open form", currentplay, timep, pause_source_func);
                     }
                     else if (eval("custParams.element_" + String(currentplay) + "_type")=="iframe"){
                         openiframe(currentplay);
-                        console.log("open iframe", currentplay, timep);
+                        //console.log("open iframe", currentplay, timep, pause_source_func);
                     }
+                    
                     done_pause = true;
                     done = false;
                 }
-            //}
         }
     }
     function pauseVideo() {
         player.pauseVideo();
         pause_source_func = true;
     }
+    function playVideo() {
+        player.playVideo();
+    }
     function openForm(num) {
-        document.getElementById("tadpoll_form" + String(num)).style.display = "block";
-        document.getElementById("tadpoll_button" + String(num)).style.display = "block";
+        document.getElementById("tadpoll_form" + pageId + "f" + String(num)).style.display = "block";
+        document.getElementById("tadpoll_button" + pageId + "f" + String(num)).style.display = "block";
     }
     function openiframe(num) {
-        //document.getElementById("tadpoll_iframeform" + String(num)).src = src;
-        document.getElementById("tadpoll_iframeform" + String(num)).style.display = "block";
-        document.getElementById("tadpoll_iframebutton" + String(num)).style.display = "block";
+        document.getElementById("tadpoll_iframeform" + pageId + "f" + String(num)).style.display = "block";
+        document.getElementById("tadpoll_iframebutton" + pageId + "f" + String(num)).style.display = "block";
     }
     
+    function openiframebutton(num) {
+        $("#tadpoll_iframe" + pageId + "f" + String(num) + "> button").text(clnTxt("custParams.element_" + String(num) + "_toggleBtnTextOpen"));
+        $("#tadpoll_iframe" + pageId + "f" + String(num) + "> button").attr("onclick", "openiframetoggle('"+ num + "')");
+        document.getElementById("tadpoll_iframebutton" + pageId + "f" + String(num)).style.display = "block";
+        document.getElementById("tadpoll_iframebutton" + pageId + "f" + String(num)).className = "btn_close";
+
+        if (num < custParams.numElements-1) {
+            done=false; 
+            done_pause = false; 
+            currentplay++;
+            playtime = eval("custParams.element_" + String(currentplay) + "_insert");
+        }
+        else {done = true;}
+    }
+
+    function openiframetoggle(num) {
+        pauseVideo();
+        pause_source_func = false;
+        document.getElementById("tadpoll_iframeform" + pageId + "f" + String(num)).style.display = "block";
+        $("#tadpoll_iframe" + pageId + "f" + String(num) + "> button").text(clnTxt("custParams.element_" + String(num) + "_toggleBtnTextClose"));
+        $("#tadpoll_iframe" + pageId + "f" + String(num) + "> button").attr("onclick", "closeiframetoggle('"+ pageId + "f" + String(num) +"')");
+        document.getElementById("tadpoll_iframebutton" + pageId + "f" + String(num)).style.display = "block";
+        document.getElementById("tadpoll_iframebutton" + pageId + "f" + String(num)).className = "btn_fs";
+    }
+
+    function clnTxt(txt){
+        var newtxt = eval(txt).replace(/%20/g, " ");
+        return newtxt;
+    }
+
     var record_id = "new";
     function closeForm(id) {
-        document.getElementById("tadpoll_form"+String(id)).style.display = "none";
-        document.getElementById("tadpoll_button"+String(id)).style.display = "none";
-        data1 = document.getElementById("data1form" + String(id)).value;
-        data2 = document.getElementById("data2form" + String(id)).value;
-        //console.log(datain);
-        var data1_key = "data1form" + String(id);
-        var data2_key = "data2form" + String(id);
+        document.getElementById("tadpoll_form"+id).style.display = "none";
+        document.getElementById("tadpoll_button"+id).style.display = "none";
+        data1 = document.getElementById("data1form" + id).value;
+        data2 = document.getElementById("data2form" + id).value;
+        const playid = id.split('f')[1];
+        var data1_key = "data1form" + playid;
+        var data2_key = "data2form" + playid;
         var data_obj = {};
         if (record_id == "new") {
             data_obj[data1_key] = data1;
             data_obj[data2_key] = data2;
-            data_obj["customer_id"]=custParams.id;
-            saveForm(data_obj)
+            data_obj["customer_id"]=custParams.cid;
+            data_obj["video_id"]=custParams.id;
+            saveForm(data_obj, "customerData")
             .then(record => {
                 record_id = record[0].id; 
             //console.log(record, record[0].id, record_id);
@@ -146,35 +185,53 @@
             data_obj["fields"]={};
             data_obj["fields"][data1_key] = data1;
             data_obj["fields"][data2_key] = data2;
-            data_obj["fields"]["customer_id"]=custParams.id;
-            console.log(data_obj, data1_key, data2_key);
-            updateForm(data_obj);
+            data_obj["fields"]["customer_id"]=custParams.cid;
+            data_obj["fields"]["video_id"]=custParams.id;
+            //console.log(data_obj, data1_key, data2_key);
+            updateForm(data_obj, "customerData");
         }
-        //done_form = true;
+        pauseVideo();
         pause_source_func = false;
-        if (id < custParams.numElements) {
+        if (playid < custParams.numElements-1) {
             //console.log("set done to false, done_form", currentplay)
             done=false;
             done_pause = false; 
             currentplay++;
             playtime = eval("custParams.element_" + String(currentplay) + "_insert");
         }
-        player.playVideo();
+        else {done = true;}
+        playVideo();
     }
     
     function closeiframe(id) {
-        document.getElementById("tadpoll_iframeform" + String(id)).style.display = "none";
-        document.getElementById("tadpoll_iframebutton" + String(id)).style.display = "none";
+        document.getElementById("tadpoll_iframeform" + id).style.display = "none";
+        document.getElementById("tadpoll_iframebutton" + id).style.display = "none";
+        const playid = id.split('f')[1];
+        pauseVideo();
         pause_source_func = false;
-        if (id < custParams.numElements) {
+        if (playid < custParams.numElements-1) {
             done=false; 
+            done_pause = false; 
             currentplay++;
             playtime = eval("custParams.element_" + String(currentplay) + "_insert");
         }
-        player.playVideo();
+        else {done = true;}
+        //console.log("iframeclose", id, currentplay, done);
+        playVideo();
+    }
+
+    function closeiframetoggle(id) {
+        document.getElementById("tadpoll_iframeform" + id).style.display = "none";
+        const playid = id.split('f')[1];
+        $("#tadpoll_iframebutton" + id).text(clnTxt("custParams.element_" + playid + "_toggleBtnTextOpen"));
+        $("#tadpoll_iframebutton" + id).attr("onclick", "openiframetoggle('"+ playid +"')");
+        document.getElementById("tadpoll_iframebutton" + id).className = "btn_close";
+        
+        //console.log("iframeclose", id, currentplay, done);
+        playVideo();
     }
     
-    function saveForm(data_obj) {
+    function saveForm(data_obj, table) {
         var myHeaders = new Headers();
         myHeaders.append("Content-Type", "application/json");
         var requestOptions = {
@@ -183,13 +240,13 @@
             redirect: "follow",
             body: JSON.stringify([data_obj])
         };
-        console.log(requestOptions);
-        return fetch("https://v1.nocodeapi.com/davegtad/airtable/rQaerrGsnnHzwllE?tableName=Table 4&api_key=GJwptPIUjuDsMsOsz", requestOptions)
+        //console.log(requestOptions);
+        return fetch("https://v1.nocodeapi.com/davegtad/airtable/rQaerrGsnnHzwllE?tableName="+table+"&api_key=GJwptPIUjuDsMsOsz", requestOptions)
         .then(response => response.json())
         .then(result => result)
         .catch(error => console.log('error', error));
     }
-    function updateForm(data_obj) {
+    function updateForm(data_obj, table) {
         var myHeaders = new Headers();
         myHeaders.append("Content-Type", "application/json");
         var requestOptions = {
@@ -199,7 +256,7 @@
             body: JSON.stringify([data_obj])
         };
     
-        fetch("https://v1.nocodeapi.com/davegtad/airtable/rQaerrGsnnHzwllE?tableName=Table 4&api_key=GJwptPIUjuDsMsOsz", requestOptions)
+        fetch("https://v1.nocodeapi.com/davegtad/airtable/rQaerrGsnnHzwllE?tableName="+table+"&api_key=GJwptPIUjuDsMsOsz", requestOptions)
         .then(response => response.text())
         .then(result => console.log(result))
         .catch(error => console.log('error', error));
